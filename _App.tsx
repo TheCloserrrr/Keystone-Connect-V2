@@ -6,6 +6,7 @@ export default function App() {
   const [formType, setFormType] = useState<"homeowner" | "contractor">("homeowner");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
 
   const year = new Date().getFullYear();
 
@@ -14,6 +15,20 @@ export default function App() {
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("theme") as "light" | "dark" | null;
+    if (saved) {
+      setTheme(saved);
+    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      setTheme("dark");
+    }
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
   const nav = [
     { id: "how", label: "How it Works" },
@@ -25,8 +40,14 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-neutral-50 text-neutral-900">
-      <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} nav={nav} />
+    <div className="min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-900 dark:text-neutral-50">
+      <Header
+        menuOpen={menuOpen}
+        setMenuOpen={setMenuOpen}
+        nav={nav}
+        theme={theme}
+        setTheme={setTheme}
+      />
       <main>
         <Hero setFormType={setFormType} />
         <TrustBar />
@@ -51,9 +72,44 @@ export default function App() {
   );
 }
 
-function Header({ menuOpen, setMenuOpen, nav }: any) {
+function ThemeToggle({ theme, setTheme, className = "" }: any) {
   return (
-    <header className="sticky top-0 z-40 backdrop-blur bg-white/70 border-b border-neutral-200">
+    <button
+      onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+      aria-label="Toggle Theme"
+      className={`inline-flex items-center justify-center w-10 h-10 rounded-xl border border-neutral-300 dark:border-neutral-600 ${className}`}
+    >
+      {theme === "light" ? (
+        <svg
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path d="M21 12.79A9 9 0 0111.21 3 7 7 0 1021 12.79z" />
+        </svg>
+      ) : (
+        <svg
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <circle cx="12" cy="12" r="5" />
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
+function Header({ menuOpen, setMenuOpen, nav, theme, setTheme }: any) {
+  return (
+    <header className="sticky top-0 z-40 backdrop-blur bg-white/70 border-b border-neutral-200 dark:bg-neutral-900/70 dark:border-neutral-700">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <a href="#top" className="flex items-center gap-3">
@@ -62,13 +118,18 @@ function Header({ menuOpen, setMenuOpen, nav }: any) {
           </a>
           <nav className="hidden md:flex items-center gap-8">
             {nav.map((n: any) => (
-              <a key={n.id} href={`#${n.id}`} className="text-sm text-neutral-700 hover:text-neutral-900">
+              <a
+                key={n.id}
+                href={`#${n.id}`}
+                className="text-sm text-neutral-700 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white"
+              >
                 {n.label}
               </a>
             ))}
+            <ThemeToggle theme={theme} setTheme={setTheme} />
             <a
               href="#contact"
-              className="inline-flex items-center rounded-2xl border border-neutral-900 px-4 py-2 text-sm font-medium hover:bg-neutral-900 hover:text-white transition"
+              className="inline-flex items-center rounded-2xl border border-neutral-900 px-4 py-2 text-sm font-medium hover:bg-neutral-900 hover:text-white transition dark:border-neutral-200 dark:hover:bg-neutral-200 dark:hover:text-neutral-900"
             >
               Get a Quote
             </a>
@@ -76,9 +137,17 @@ function Header({ menuOpen, setMenuOpen, nav }: any) {
           <button
             onClick={() => setMenuOpen((v: boolean) => !v)}
             aria-label="Toggle Menu"
-            className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl border border-neutral-300"
+            className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl border border-neutral-300 dark:border-neutral-600"
           >
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" className="pointer-events-none">
+            <svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="pointer-events-none"
+            >
               <path d="M3 6h18M3 12h18M3 18h18" />
             </svg>
           </button>
@@ -87,13 +156,18 @@ function Header({ menuOpen, setMenuOpen, nav }: any) {
           <div className="md:hidden pb-6">
             <div className="grid gap-2">
               {nav.map((n: any) => (
-                <a key={n.id} href={`#${n.id}`} className="block rounded-xl px-3 py-2 text-neutral-700 hover:bg-neutral-100">
+                <a
+                  key={n.id}
+                  href={`#${n.id}`}
+                  className="block rounded-xl px-3 py-2 text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                >
                   {n.label}
                 </a>
               ))}
+              <ThemeToggle theme={theme} setTheme={setTheme} className="mt-1" />
               <a
                 href="#contact"
-                className="mt-1 inline-flex items-center justify-center rounded-2xl border border-neutral-900 px-4 py-2 text-sm font-medium hover:bg-neutral-900 hover:text-white transition"
+                className="mt-1 inline-flex items-center justify-center rounded-2xl border border-neutral-900 px-4 py-2 text-sm font-medium hover:bg-neutral-900 hover:text-white transition dark:border-neutral-200 dark:hover:bg-neutral-200 dark:hover:text-neutral-900"
               >
                 Get a Quote
               </a>
